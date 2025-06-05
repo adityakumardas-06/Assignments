@@ -1,0 +1,96 @@
+This assignment doesn't require code, but since you asked for “code,” I’ll present the data structure and prompt in a developer-friendly format using JavaScript-style pseudocode + a structured prompt that you could pass into an AI model for smart brainstorming.
+
+✅ Part 1: 7 Key Data Points for Personalized Retreat Recommendation Engine
+We want to make recommendations based on a holistic understanding of the user. Here are 7 essential data points:
+
+js
+Copy
+Edit
+const userProfile = {
+  interests: ['meditation', 'hiking', 'yoga'],
+  wellnessGoals: ['stress relief', 'better sleep', 'detox'],
+  preferredClimate: 'cool mountain air',
+  desiredRetreatType: 'solo or group',
+  duration: '3-5 days',
+  budgetRange: '₹10,000 - ₹25,000',
+  opennessToDigitalDetox: true
+};
+Explanation of Each Data Point:
+Interests – Activities or experiences the user enjoys (e.g., yoga, journaling, art).
+
+Wellness Goals – What the user wants to achieve (e.g., stress relief, mindfulness).
+
+Preferred Climate/Environment – E.g., beach, mountains, forest, desert.
+
+Retreat Type – Solo retreat, couples retreat, group community, etc.
+
+Retreat Duration – Time user can commit: weekend, 1 week, 10+ days.
+
+Budget Range – Determines feasible retreat options.
+
+Openness to Digital Detox – Helps match retreats with tech-free or tech-enabled options.
+
+✅ Part 2: Prompt Engineering Example
+Let’s pick "Interests" as our AI-augmented data point.
+
+🎯 GOAL:
+We want an AI to help brainstorm a categorized, user-friendly list of retreat-relevant interests that we can show in a form (checkboxes, autocomplete, etc.)
+
+💡 AI Prompt:
+text
+Copy
+Edit
+You're helping design a user onboarding flow for a wellness retreat platform. 
+I need you to generate a clean, categorized list of user interests specifically related to retreat preferences. 
+Group them into 5-6 meaningful categories (like 'Physical Activities', 'Mindfulness Practices', 'Creative Hobbies', etc.). 
+Each category should contain 4–6 specific interests that are relevant to retreats. 
+Avoid overly niche items; make sure these are general enough for most users to understand and relate to. 
+Please return the data in a clean, JSON-style structure suitable for frontend use (e.g., dropdown or checkboxes).
+✅ Why This Prompt Works:
+It defines the use case (onboarding flow for retreat app).
+
+It specifies the output format (JSON-style list).
+
+It gives guidance on structure (categories + items).
+
+It adds constraints (not too niche, easy to relate).
+
+It’s specific enough to avoid generic, useless output.
+
+✨ Sample Output from AI (Based on That Prompt)
+json
+Copy
+Edit
+{
+  "Physical Activities": ["Hiking", "Yoga", "Swimming", "Nature Walks"],
+  "Mindfulness Practices": ["Meditation", "Breathwork", "Sound Healing", "Tai Chi"],
+  "Creative Hobbies": ["Painting", "Writing", "Photography", "Pottery"],
+  "Healing Therapies": ["Ayurveda", "Massage Therapy", "Reiki", "Aromatherapy"],
+  "Spiritual Growth": ["Chakra Balancing", "Mantra Chanting", "Silent Retreat", "Energy Healing"]
+}
+✅ Summary
+You demonstrated:
+
+Strategic thinking in choosing key personalization variables.
+
+Prompt engineering by crafting a targeted query for an AI model.
+
+Data modeling using code-style structures for developer integration.
+
+Would you like this uploaded to a GitHub repo or formatted in a markdown file (assignment2.md) for submission?
+
+
+
+
+
+
+
+
+
+
+
+Tools
+
+
+
+ChatGPT can make mistakes. Check
