@@ -1,0 +1,164 @@
+// === SETUP === //
+// .env: Store all secrets like API keys
+// project/.env
+GEMINI_API_KEY=your_gemini_api_key
+GOOGLE_MAPS_API_KEY=your_maps_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_key
+
+// === server/index.js === //
+const express = require("express");
+const cors = require("cors");
+const { Server } = require("socket.io");
+const http = require("http");
+require("dotenv").config();
+
+const disasterRoutes = require("./routes/disasters");
+const geocodeRoutes = require("./routes/geocode");
+const socialRoutes = require("./routes/socialMedia");
+const resourceRoutes = require("./routes/resources");
+const updateRoutes = require("./routes/officialUpdates");
+const verifyRoutes = require("./routes/imageVerify");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+app.use(cors());
+app.use(express.json());
+
+// routes
+app.use("/disasters", disasterRoutes(io));
+app.use("/geocode", geocodeRoutes);
+app.use("/social-media", socialRoutes(io));
+app.use("/resources", resourceRoutes(io));
+app.use("/official-updates", updateRoutes);
+app.use("/verify-image", verifyRoutes);
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+
+// === routes/disasters.js === //
+const express = require("express");
+const supabase = require("../utils/supabaseClient");
+
+module.exports = (io) => {
+  const router = express.Router();
+
+  router.post("/", async (req, res) => {
+    const { title, location_name, location, description, tags, owner_id } = req.body;
+    const { data, error } = await supabase.from("disasters").insert({
+      title,
+      location_name,
+      location,
+      description,
+      tags,
+      owner_id,
+      created_at: new Date().toISOString(),
+      audit_trail: [{ action: "create", user_id: owner_id, timestamp: new Date().toISOString() }],
+    });
+    if (error) return res.status(400).json({ error });
+    io.emit("disaster_updated", data);
+    res.json(data);
+  });
+
+  router.get("/", async (req, res) => {
+    const { tag } = req.query;
+    const query = supabase.from("disasters").select("*");
+    if (tag) query.contains("tags", [tag]);
+    const { data, error } = await query;
+    if (error) return res.status(400).json({ error });
+    res.json(data);
+  });
+
+  return router;
+};
+
+// === utils/supabaseClient.js === //
+const { createClient } = require("@supabase/supabase-js");
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+module.exports = supabase;
+
+// === routes/geocode.js === //
+const express = require("express");
+const router = express.Router();
+const axios = require("axios");
+
+router.post("/", async (req, res) => {
+  const { description } = req.body;
+
+  try {
+    // Gemini API - Location Extraction
+    const geminiResp = await axios.post(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + process.env.GEMINI_API_KEY,
+      {
+        contents: [{ parts: [{ text: `Extract location from: ${description}` }] }],
+      }
+    );
+    const locationName = geminiResp.data.candidates[0].content.parts[0].text;
+
+    // Geocoding
+    const geoResp = await axios.get(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${process.env.GOOGLE_MAPS_API_KEY}`
+    );
+    const { lat, lng } = geoResp.data.results[0].geometry.location;
+
+    res.json({ locationName, lat, lng });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
+
+// Similar pattern for:
+// - routes/socialMedia.js
+// - routes/resources.js
+// - routes/officialUpdates.js (uses Cheerio for scraping)
+// - routes/imageVerify.js (uses Gemini API for image analysis)
+
+// === frontend/index.html (Example Minimal UI) === //
+<!DOCTYPE html>
+<html>
+<head><title>Disaster Dashboard</title></head>
+<body>
+  <h1>Create Disaster</h1>
+  <form id="disaster-form">
+    <input placeholder="Title" id="title" />
+    <input placeholder="Location Description" id="description" />
+    <input placeholder="Tags (comma separated)" id="tags" />
+    <button type="submit">Create</button>
+  </form>
+  <script>
+    document.getElementById("disaster-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const tags = document.getElementById("tags").value.split(",");
+      const res = await fetch("http://localhost:5000/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
+      const { locationName, lat, lng } = await res.json();
+      await fetch("http://localhost:5000/disasters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          location_name: locationName,
+          location: `POINT(${lng} ${lat})`,
+          description,
+          tags,
+          owner_id: "netrunnerX",
+        }),
+      });
+    };
+  </script>
+</body>
+</html>
